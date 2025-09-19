@@ -1,7 +1,7 @@
 
 # JavaScript
 
-JavaScript 本身是同步(synchronous)、單執行緒(single-threaded)的語言，它無法直接處理異步(asynchronous)操作。但透過瀏覽器或 Node.js 提供的 API，以及事件迴圈機制，JavaScript 才能以非同步的方式執行任務。
+JavaScript 本身是同步(synchronous)、單執行緒(single-threaded)的語言，它無法直接處理非同步(asynchronous)操作。但透過瀏覽器或 Node.js 提供的 API，以及事件迴圈機制，JavaScript 才能以非同步的方式執行任務。
 
 # Node.js 
 Node.js 是基於 Chrome V8 引擎開發的執行環境，讓 JavaScript 不再侷限於瀏覽器中執行，而能在伺服器端使用。
@@ -69,13 +69,25 @@ flowchart TD
     - 直接將任務放置在 microtask Queue
 > 備注：Promise 的建構函數是同步執行的，但 .then()、.catch()、.finally() 等回調會進入 Microtask Queue
 
+### nextTick Queue
+這個 Queue 並不存在於 Event Loop，是獨立的 Queue，只要在這個 Queue 裡面有東西，不管 Event loop 目前處於哪一個階段，就會優先執行這邊的 callback。
+1. process.nextTick(): 會透過底層的 C/C++ 處理器（handler）轉換到需要執行的 JavaScript 。另外要注意可能會阻塞事件迴圈，因為它的優先級最高，會一直執行直到 nextTick Queue 清空為止。
+
+### process.nextTick() 對比 setImmediate()
+|名稱|實際行為|
+|--|--|
+|process.nextTick()|立即執行（在當前階段）|
+|setImmediate()|稍後執行（下一個事件循環迭代）|
+
+在官方文件上建議所有開發人員使用 setImmediate()，因為比較容易推理目前的流程到哪。
+
 ### setImmediate() 對比 setTimeout()
 - setImmediate()：是在當前的 Poll 完成後執行
 - setTimeout()：排程一個腳本在經過最少閾值毫秒數後執行
 
 計時器的執行順序取決於呼叫它們的上下文。如果兩者都在主模組中調用，則計時將受進程效能的約束（進程效能可能會受到電腦上執行的其他應用程式的影響）。
 
-舉例：在不執行 I/O 週期值些呼叫以下程式碼，無法確認它的順序，因為它受流程效能的約束
+舉例：在不執行 I/O 週期內呼叫以下程式碼，無法確認它的順序，因為它受流程效能的約束
 ``` javascript
 setTimeout(() => {
   console.log('timeout');
@@ -99,6 +111,48 @@ fs.readFile(__filename, () => {
 });
 
 ```
+# 執行順序
+``` text
+nextTick Queue > Microtask Queue > Event Loop 各階段
+```
+#  測試題
+請問以下的輸出順序為何
 
-## process.nextTick()
- TODO: 
+```javascript
+console.log('start');
+ 
+process.nextTick(function() {
+  console.log('nextTick1');
+});
+ 
+setTimeout(function() {
+  console.log('setTimeout');
+}, 0);
+ 
+new Promise(function(resolve, reject) {
+  console.log('promise');
+  resolve('resolve');
+}).then(function(result) {
+  console.log('promise then');
+});
+ 
+(async function() {
+  console.log('async');
+})();
+ 
+setImmediate(function() {
+  console.log('setImmediate');
+});
+ 
+process.nextTick(function() {
+  console.log('nextTick2');
+});
+ 
+console.log('end');
+```
+
+## 參考資料
+
+- [Node.js 官方文件 - Event Loop](https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick)
+- [Libuv 官方 GitHub](https://github.com/libuv/libuv)
+- [Andy Wu - 完整圖解Node.js的Event Loop(事件迴圈)](https://notes.andywu.tw/2020/%E5%AE%8C%E6%95%B4%E5%9C%96%E8%A7%A3node-js%E7%9A%84event-loop%E4%BA%8B%E4%BB%B6%E8%BF%B4%E5%9C%88/)
