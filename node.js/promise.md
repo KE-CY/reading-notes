@@ -255,4 +255,4 @@ Promise.any([api1, api2, api3])
 ## 參考資料
 - [Ray - JavaScript 中的 Promise 是什麼？以及為什麼你要懂 Promise](https://israynotarray.com/javascript/20211128/2950137358/)
 - [Node.js 官方文件 - Discover Promises in Node.js](https://nodejs.org/en/learn/asynchronous-work/event-loop-timers-and-nexttick)
-- [- Modern Web 前端藏寶圖系列 第 18 篇 Promise 方法](https://ithelp.ithome.com.tw/articles/10276827)
+- [Modern Web 前端藏寶圖系列 第 18 篇 Promise 方法](https://ithelp.ithome.com.tw/articles/10276827)
